@@ -1,0 +1,18 @@
+name:                StackMonad
+version:             0.1.0.0
+synopsis:            A simple monad which supports pushing and popping.
+homepage:            https://alaminium.io/StackMonad
+license:             MIT
+license-file:        LICENSE
+author:              Habib Alamin
+maintainer:          ha.alamin@gmail.com
+copyright:           © حبيب الامين ‪2017
+category:            Data
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  README.md
+
+library
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
