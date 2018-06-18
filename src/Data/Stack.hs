@@ -1,4 +1,9 @@
-module Data.Stack (Stack
+module Data.Stack (StackT
+                 , Stack
+                 , nullStackT
+                 , runStackT
+                 , evalStackT
+                 , execStackT
                  , nullStack
                  , runStack
                  , evalStack
@@ -8,35 +13,51 @@ module Data.Stack (Stack
 
 import Control.Arrow (first)
 import Data.Function.Combinators ((...))
+import Control.Monad.Identity (Identity, runIdentity)
 import Data.Maybe (listToMaybe)
 
-newtype Stack a r = Stack { runStack :: [a] -> (r, [a]) }
+-- StackT
 
-instance Functor (Stack a) where
-  fmap f (Stack computation) =
-    Stack $ first f . computation
+newtype StackT a m r = StackT { runStackT :: [a] -> m (r, [a]) }
 
-instance Applicative (Stack a) where
-  pure result = Stack $ \stack -> (result, stack)
+instance Functor m => Functor (StackT a m) where
+  fmap f (StackT computation) =
+    StackT $ fmap (first f) . computation
 
-  (Stack computationA) <*> (Stack computationB) =
-    Stack $ \stack ->
-      let
-        (resultA, newStackA) = computationA stack
-        (resultB, newStackB) = computationB newStackA
-      in
-        (resultA resultB, newStackB)
+instance Monad m => Applicative (StackT a m) where
+  pure result = StackT $ \stack -> pure (result, stack)
 
-instance Monad (Stack a) where
-  (Stack computation) >>= f =
-    Stack $ \stack ->
-      let
-        (firstResult, newStackA) = computation stack
-      in
-        runStack (f firstResult) newStackA
+  (StackT computationA) <*> (StackT computationB) =
+    StackT $ \stack -> do
+      (resultA, newStackA) <- computationA stack
+      (resultB, newStackB) <- computationB newStackA
+
+      return (resultA resultB, newStackB)
+
+instance Monad m => Monad (StackT a m) where
+  (StackT computation) >>= f =
+    StackT $ \stack -> do
+      (firstResult, newStackA) <- computation stack
+      runStackT (f firstResult) newStackA
+
+nullStackT :: Monad m => StackT a m ()
+nullStackT = pure ()
+
+evalStackT :: Functor m => StackT a m r -> [a] -> m r
+evalStackT = fmap fst ... runStackT
+
+execStackT :: Functor m => StackT a m r -> [a] -> m [a]
+execStackT = fmap snd ... runStackT
+
+-- Stack
+
+type Stack a r = StackT a Identity r
 
 nullStack :: Stack a ()
 nullStack = pure ()
+
+runStack :: Stack a r -> [a] -> (r, [a])
+runStack = runIdentity ... runStackT
 
 evalStack :: Stack a r -> [a] -> r
 evalStack = fst ... runStack
@@ -44,12 +65,14 @@ evalStack = fst ... runStack
 execStack :: Stack a r -> [a] -> [a]
 execStack = snd ... runStack
 
-pop :: Stack a (Maybe a)
-pop = Stack $ \stack ->
-  (safeHead stack, drop 1 stack)
+-- StackT operations
+
+pop :: Monad m => StackT a m (Maybe a)
+pop = StackT $ \stack ->
+  return (safeHead stack, drop 1 stack)
     where
       safeHead = listToMaybe
 
-push :: a -> Stack a ()
-push x = Stack $ \stack ->
-  ((), x : stack)
+push :: Monad m => a -> StackT a m ()
+push x = StackT $ \stack ->
+  return ((), x : stack)

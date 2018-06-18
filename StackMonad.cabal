@@ -18,6 +18,7 @@ library
   exposed-modules:     Data.Stack
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
+                     , mtl
 
 test-suite stackmonad-test
   type:                exitcode-stdio-1.0
