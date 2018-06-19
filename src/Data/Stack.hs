@@ -4,6 +4,7 @@ module Data.Stack (StackT
                  , runStackT
                  , evalStackT
                  , execStackT
+                 , lift
                  , nullStack
                  , runStack
                  , evalStack
@@ -48,6 +49,12 @@ evalStackT = fmap fst ... runStackT
 
 execStackT :: Functor m => StackT a m r -> [a] -> m [a]
 execStackT = fmap snd ... runStackT
+
+lift :: Monad m => m r -> StackT a m r
+lift action =
+  StackT $ \stack -> do
+    result <- action
+    return (result, stack)
 
 -- Stack
 
