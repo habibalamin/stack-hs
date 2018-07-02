@@ -1,4 +1,5 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module StackSpec where
 
@@ -6,6 +7,7 @@ import Test.Hspec (Spec, shouldBe, shouldReturn, describe, it)
 import System.IO.Silently (capture)
 
 import Data.Stack
+import Control.Monad.Trans.State.Lazy (execState, evalState)
 import Data.Maybe (fromMaybe)
 
 spec :: Spec
@@ -68,6 +70,13 @@ spec = do
     it "returns the result of the final sequenced computation" $ do
       evalStack stackManip [] `shouldBe` ()
 
+  describe "a complex stack manipulation in State" $ do
+    it "sets the stack to the expected final state" $ do
+      execState stackManip [] `shouldBe` [3, 0, 2, 1]
+
+    it "returns the result of the final sequenced computation" $ do
+      evalState stackManip [] `shouldBe` ()
+
   describe "a complex stack manipulation with IO" $ do
     it "sets the stack to the expected final state" $ do
       execStackT stackManipWithIO [] `shouldReturn` [3, 0, 2, 1]
@@ -80,7 +89,7 @@ spec = do
       capture (evalStackT stackManipWithIO [])
         `shouldReturn` ("Hello, world!\n", ())
 
-stackManip :: Stack Integer ()
+stackManip :: (MonadStack m Integer, Monad m) => m ()
 stackManip = do
   a <- pop
   push 1

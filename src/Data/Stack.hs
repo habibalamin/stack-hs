@@ -1,4 +1,9 @@
-module Data.Stack (StackT
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+module Data.Stack (MonadStack
+                 , StackT
                  , Stack
                  , nullStackT
                  , runStackT
@@ -16,6 +21,7 @@ import Control.Arrow (first)
 import Data.Function.Combinators ((...))
 import Control.Monad.Identity (Identity, runIdentity)
 import Data.Maybe (listToMaybe)
+import Control.Monad.State (StateT(..))
 
 -- StackT
 
@@ -74,12 +80,24 @@ execStack = snd ... runStack
 
 -- StackT operations
 
-pop :: Monad m => StackT a m (Maybe a)
-pop = StackT $ \stack ->
-  return (safeHead stack, drop 1 stack)
-    where
-      safeHead = listToMaybe
+class MonadStack s a | s -> a where
+  pop :: s (Maybe a)
+  push :: a -> s ()
 
-push :: Monad m => a -> StackT a m ()
-push x = StackT $ \stack ->
-  return ((), x : stack)
+instance Monad m => MonadStack (StackT a m) a where
+  pop = StackT $ \stack ->
+    return (safeHead stack, drop 1 stack)
+      where
+        safeHead = listToMaybe
+
+  push x = StackT $ \stack ->
+    return ((), x : stack)
+
+instance Monad m => MonadStack (StateT [a] m) a where
+  pop = StateT $ \state ->
+    return (safeHead state, drop 1 state)
+      where
+        safeHead = listToMaybe
+
+  push x = StateT $ \state ->
+    return ((), x : state)
