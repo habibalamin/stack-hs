@@ -1,3 +1,5 @@
+{-# LANGUAGE ExtendedDefaultRules #-}
+
 module StackSpec where
 
 import Test.Hspec (Spec, shouldBe, shouldReturn, describe, it)
@@ -10,7 +12,7 @@ spec :: Spec
 spec = do
   describe "Stack.nullStack" $ do
     it "does nothing to an empty stack" $ do
-      execStack nullStack [] `shouldBe` ([] :: [()])
+      execStack nullStack [] `shouldBe` []
 
     it "does nothing to a populated stack" $ do
       execStack nullStack [0] `shouldBe` [0]
@@ -23,7 +25,7 @@ spec = do
 
   describe "Stack.runStack" $ do
     it "returns a result and new stack from a computation and stack" $ do
-      runStack nullStack [] `shouldBe` ((), [] :: [()])
+      runStack nullStack [] `shouldBe` ((), [])
 
   describe "Stack.evalStack" $ do
     it "returns a result from a computation and stack" $ do
@@ -31,7 +33,7 @@ spec = do
 
   describe "Stack.execStack" $ do
     it "returns a new stack from a computation and stack" $ do
-      execStack nullStack [] `shouldBe` ([] :: [()])
+      execStack nullStack [] `shouldBe` []
 
   describe "Stack.push" $ do
     it "pushes a value onto an empty stack" $ do
@@ -48,13 +50,13 @@ spec = do
 
   describe "Stack.pop" $ do
     it "leaves an empty stack unchanged" $ do
-      execStack pop [] `shouldBe` ([] :: [()])
+      execStack pop [] `shouldBe` []
 
     it "removes the head of a populated stack" $ do
       execStack pop [1] `shouldBe` []
 
     it "returns Nothing from an empty stack" $ do
-      evalStack pop [] `shouldBe` (Nothing :: Maybe ())
+      evalStack pop [] `shouldBe` Nothing
 
     it "returns Just the head of a populated stack" $ do
       evalStack pop [1] `shouldBe` Just 1
