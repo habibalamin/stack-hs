@@ -102,10 +102,4 @@ stackManip = do
 stackManipWithIO :: StackT Integer IO ()
 stackManipWithIO = do
   lift $ putStrLn "Hello, world!"
-  a <- pop
-  push 1
-  push 2
-  push 3
-  b <- pop
-  push (fromMaybe 0 a)
-  push (fromMaybe 0 b)
+  stackManip
